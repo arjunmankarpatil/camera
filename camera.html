@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobile Camera Preview</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #121212;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: white;
+            overflow: hidden;
+        }
+
+        #container {
+            position: relative;
+            width: 90%;
+            max-width: 400px;
+            aspect-ratio: 9 / 16;
+            background: #000;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1); /* Default mirror for selfie mode */
+        }
+
+        .controls {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        button {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+
+        button:active {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .error-msg {
+            padding: 20px;
+            text-align: center;
+            color: #ff6b6b;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="container">
+        <video id="video" autoplay playsinline></video>
+        <div class="controls">
+            <button id="switchBtn">Flip Camera</button>
+        </div>
+    </div>
+
+    <script>
+        const video = document.getElementById('video');
+        const switchBtn = document.getElementById('switchBtn');
+        let currentStream = null;
+        let useRearCamera = false;
+
+        async function startCamera() {
+            // Stop any existing streams
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
+            }
+
+            const constraints = {
+                video: {
+                    facingMode: useRearCamera ? "environment" : "user",
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
+                },
+                audio: false
+            };
+
+            try {
+                currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+                video.srcObject = currentStream;
+                
+                // Mirror the video only if using the front camera
+                video.style.transform = useRearCamera ? "scaleX(1)" : "scaleX(-1)";
+            } catch (error) {
+                console.error("Error accessing camera:", error);
+                document.body.innerHTML += `<p class="error-msg">Camera access denied or not available.</p>`;
+            }
+        }
+
+        switchBtn.addEventListener('click', () => {
+            useRearCamera = !useRearCamera;
+            startCamera();
+        });
+
+        // Initialize on load
+        startCamera();
+    </script>
+</body>
+</html>
